@@ -19,6 +19,24 @@ const formSchema = z.object({
   }),
 });
 
+const ingredientList = [
+  'chicken',
+  'rice',
+  'broccoli',
+  'beef',
+  'pasta',
+  'tomatoes',
+  'onions',
+  'garlic',
+  'potatoes',
+  'carrots',
+  'spinach',
+  'eggs',
+  'milk',
+  'cheese',
+  'bread',
+];
+
 export default function Home() {
   const [recipes, setRecipes] = useState<
     {name: string; description: string; instructions: string}[]
@@ -78,10 +96,19 @@ export default function Home() {
                   <FormItem>
                     <FormLabel>Ingredients</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., chicken, rice, broccoli" {...field} />
+                      <Input
+                        placeholder="e.g., chicken, rice, broccoli"
+                        {...field}
+                        list="ingredientList"
+                      />
                     </FormControl>
+                    <datalist id="ingredientList">
+                      {ingredientList.map((ingredient) => (
+                        <option key={ingredient} value={ingredient} />
+                      ))}
+                    </datalist>
                     <FormDescription>
-                      Enter a comma-separated list of ingredients.
+                      Enter a comma-separated list of ingredients. You can also choose from the suggestions.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
