@@ -14,6 +14,10 @@ import {z} from 'genkit';
 
 const GenerateRecipeInputSchema = z.object({
   ingredients: z.array(z.string()).describe('A list of ingredients available in the fridge.'),
+  cuisine: z.string().optional().describe('The preferred cuisine style (e.g., French, Italian, Japanese).'),
+  dietaryPreferences: z.string().optional().describe('Dietary restrictions or preferences (e.g., vegetarian, vegan, gluten-free).'),
+  difficulty: z.string().optional().describe('The desired difficulty level of the recipe (e.g., easy, medium, hard).'),
+  maxPrepTime: z.number().optional().describe('Maximum preparation time in minutes.'),
 });
 export type GenerateRecipeInput = z.infer<typeof GenerateRecipeInputSchema>;
 
@@ -37,6 +41,10 @@ const prompt = ai.definePrompt({
   input: {
     schema: z.object({
       ingredients: z.array(z.string()).describe('A list of ingredients available in the fridge.'),
+      cuisine: z.string().optional().describe('The preferred cuisine style (e.g., French, Italian, Japanese).'),
+      dietaryPreferences: z.string().optional().describe('Dietary restrictions or preferences (e.g., vegetarian, vegan, gluten-free).'),
+      difficulty: z.string().optional().describe('The desired difficulty level of the recipe (e.g., easy, medium, hard).'),
+      maxPrepTime: z.number().optional().describe('Maximum preparation time in minutes.'),
     }),
   },
   output: {
@@ -50,13 +58,40 @@ const prompt = ai.definePrompt({
       ).describe('A list of recipe suggestions.'),
     }),
   },
-  prompt: `You are a chef specializing in creating recipes based on available ingredients.
+  prompt: `You are a chef specializing in creating recipes based on available ingredients and user preferences.
 
   Generate a list of recipe suggestions based on the following ingredients:
 
   Ingredients: {{{ingredients}}}
 
-  Each recipe should have a name, a short description, and instructions.
+  {{#cuisine}}
+  Preferred cuisine style: {{{cuisine}}}
+  {{/cuisine}}
+
+  {{#dietaryPreferences}}
+  Dietary preferences: {{{dietaryPreferences}}}
+  {{/dietaryPreferences}}
+
+  {{#difficulty}}
+  Difficulty level: {{{difficulty}}}
+  {{/difficulty}}
+
+  {{#maxPrepTime}}
+  Maximum preparation time: {{{maxPrepTime}}} minutes
+  {{/maxPrepTime}}
+
+  Each recipe should have:
+  1. A creative name that reflects the dish
+  2. A short appetizing description that mentions the main ingredients and style
+  3. Detailed instructions including preparation steps, cooking times, and serving suggestions
+
+  Make sure all recipes:
+  - Use the specified ingredients creatively
+  - Follow the dietary preferences exactly
+  - Match the requested cuisine style when specified
+  - Are appropriate for the requested difficulty level
+  - Can be prepared within the specified time limit
+  - Include approximate preparation and cooking times in the instructions
   `,
 });
 

@@ -12,11 +12,17 @@ import {useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {useEffect, useState, useRef} from 'react';
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Slider} from "@/components/ui/slider";
 
 const formSchema = z.object({
   ingredients: z.string().min(2, {
     message: 'Ingredients must be at least 2 characters.',
   }),
+  cuisine: z.string().optional(),
+  dietaryPreferences: z.string().optional(),
+  difficulty: z.string().optional(),
+  maxPrepTime: z.number().default(60).optional(),
 });
 
 const ingredientList = [
@@ -37,6 +43,35 @@ const ingredientList = [
   'bread',
 ];
 
+const cuisineOptions = [
+  { value: 'french', label: 'Française' },
+  { value: 'italian', label: 'Italienne' },
+  { value: 'japanese', label: 'Japonaise' },
+  { value: 'chinese', label: 'Chinoise' },
+  { value: 'mexican', label: 'Mexicaine' },
+  { value: 'indian', label: 'Indienne' },
+  { value: 'thai', label: 'Thaïlandaise' },
+  { value: 'mediterranean', label: 'Méditerranéenne' },
+  { value: 'american', label: 'Américaine' },
+  { value: 'moroccan', label: 'Marocaine' },
+];
+
+const dietaryOptions = [
+  { value: 'none', label: 'Aucune préférence' },
+  { value: 'vegetarian', label: 'Végétarien' },
+  { value: 'vegan', label: 'Végétalien' },
+  { value: 'gluten-free', label: 'Sans gluten' },
+  { value: 'dairy-free', label: 'Sans produits laitiers' },
+  { value: 'keto', label: 'Cétogène' },
+  { value: 'low-carb', label: 'Faible en glucides' },
+];
+
+const difficultyOptions = [
+  { value: 'easy', label: 'Facile' },
+  { value: 'medium', label: 'Moyen' },
+  { value: 'hard', label: 'Difficile' },
+];
+
 export default function Home() {
   const [recipes, setRecipes] = useState<
     {name: string; description: string; instructions: string}[]
@@ -48,6 +83,10 @@ export default function Home() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       ingredients: '',
+      cuisine: 'all',
+      dietaryPreferences: 'none',
+      difficulty: 'medium',
+      maxPrepTime: 60,
     },
   });
 
@@ -55,7 +94,13 @@ export default function Home() {
     try {
       setLoading(true);
       const ingredientsArray = values.ingredients.split(',').map(item => item.trim());
-      const generatedRecipes = await generateRecipe({ingredients: ingredientsArray});
+      const generatedRecipes = await generateRecipe({
+        ingredients: ingredientsArray,
+        cuisine: values.cuisine === 'all' ? undefined : values.cuisine,
+        dietaryPreferences: values.dietaryPreferences === 'none' ? undefined : values.dietaryPreferences,
+        difficulty: values.difficulty || undefined,
+        maxPrepTime: values.maxPrepTime !== undefined ? values.maxPrepTime : 60,
+      });
       setRecipes(generatedRecipes.recipes);
       toast({
         title: 'Recettes générées !',
@@ -106,7 +151,7 @@ export default function Home() {
             <div className="absolute -left-20 -top-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl animate-pulse-subtle"></div>
             <CardTitle className="text-3xl font-title">Votre Chef Personnel</CardTitle>
             <CardDescription className="text-lg font-modern">
-              Entrez les ingrédients que vous avez dans votre frigo pour générer de délicieuses recettes.
+              Entrez les ingrédients que vous avez dans votre frigo et personnalisez vos préférences culinaires.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 relative z-10">
@@ -138,6 +183,127 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="cuisine"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-medium">Cuisine</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12 text-lg bg-background/60 border border-accent/30 focus:border-primary focus:ring-primary/20">
+                              <SelectValue placeholder="Choisir une cuisine" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="all">Toutes cuisines</SelectItem>
+                            {cuisineOptions.map((cuisine) => (
+                              <SelectItem key={cuisine.value} value={cuisine.value}>
+                                {cuisine.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-sm font-modern">
+                          Optionnel - Style de cuisine préféré
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="dietaryPreferences"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-medium">Préférences alimentaires</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12 text-lg bg-background/60 border border-accent/30 focus:border-primary focus:ring-primary/20">
+                              <SelectValue placeholder="Préférences alimentaires" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {dietaryOptions.map((diet) => (
+                              <SelectItem key={diet.value} value={diet.value}>
+                                {diet.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-sm font-modern">
+                          Restrictions alimentaires ou régimes spécifiques
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="difficulty"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-medium">Niveau de difficulté</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12 text-lg bg-background/60 border border-accent/30 focus:border-primary focus:ring-primary/20">
+                              <SelectValue placeholder="Niveau de difficulté" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {difficultyOptions.map((difficulty) => (
+                              <SelectItem key={difficulty.value} value={difficulty.value}>
+                                {difficulty.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-sm font-modern">
+                          Niveau de compétence culinaire requis
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="maxPrepTime"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-medium">
+                          Temps de préparation maximum: {field.value ?? 60} minutes
+                        </FormLabel>
+                        <FormControl>
+                          <Slider
+                            min={10}
+                            max={180}
+                            step={5}
+                            defaultValue={[field.value ?? 60]}
+                            onValueChange={(values) => field.onChange(values[0])}
+                            className="py-4"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm font-modern">
+                          Temps maximum souhaité pour la préparation et la cuisson
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <Button 
                   type="submit" 
                   className="w-full h-12 text-lg font-medium bg-gradient-mojito hover:shadow-neon-green transition-all duration-300 animate-fade-in"
